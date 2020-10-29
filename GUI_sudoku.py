@@ -23,7 +23,7 @@ class Grid:
         self.height = height
         self.model = None
         self.update_model()
-        self.select = None
+        self.selected = None
         self.win = win
 
     def update_model(self):
@@ -48,6 +48,25 @@ class Grid:
         for i in range(self.rows):
             for j in range(self.cols):
                 self.cubes[i][j].draw(self.win)
+
+    def select(self, col, row):
+        for i in range(self.rows):
+            for j in range(self.cols):
+                self.cubes[i][j].selected = False
+
+        self.cubes[row][col].selected = True
+        self.selected = row, col
+
+    def click(self, pos):
+        i, j = pos
+
+        if i < self.width and j < self.height:
+            gap = self.width // 9
+            x = i // gap
+            y = j // gap
+            return x, y
+        else:
+            return None
 
 
 class Cube:
@@ -76,7 +95,7 @@ class Cube:
             pass
         else:
             text = font.render(str(self.value), 1, (0, 0, 0))
-            win.blit(text, (x + (gap/2 - text.get_width()/2), y + (gap/2 - text.get_height()/2)))
+            win.blit(text, (x + (gap//2 - text.get_width()//2), y + (gap//2 - text.get_height()//2)))
 
         if self.selected:
             pygame.draw.rect(win, (255, 0, 0), (x, y, gap, gap), 3)
@@ -119,8 +138,14 @@ def main():
                 if event.key == pygame.K_9 or event.key == pygame.K_KP9:
                     key = 9
 
-            redraw_window(win, board)
-            pygame.display.update()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                clicked = board.click(pos)
+                if clicked:
+                    board.select(clicked[0], clicked[1])
+
+        redraw_window(win, board)
+        pygame.display.update()
 
 
 main()
