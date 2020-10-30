@@ -26,14 +26,21 @@ class Grid:
         self.selected = None
         self.win = win
 
+    # generates a board without the temp values to check for a solution
     def update_model(self):
         for i in range(self.rows):
             for j in range(self.cols):
                 self.model = self.cubes[i][j].value
 
+    def place(self, val):
+        i, j = self.selected
+        if self.cubes[i][j].value == 0:
+            self.cubes[i][j].set(val)
+
+    # draw the grid lines and the cubes
     def draw(self):
         # Draw grid lines
-        gap = self.width // 9
+        gap = self.width // 9   # size of each row and column
 
         for i in range(self.rows + 1):
             if i % 3 == 0 and i != 0:
@@ -49,17 +56,21 @@ class Grid:
             for j in range(self.cols):
                 self.cubes[i][j].draw(self.win)
 
+    # select the cube that was clicked
     def select(self, col, row):
+        # reset every cube
         for i in range(self.rows):
             for j in range(self.cols):
                 self.cubes[i][j].selected = False
 
+        # select the specified cube
         self.cubes[row][col].selected = True
         self.selected = row, col
 
+    # find the row and column of the clicked cube and returns it,if the click was outside the board return none
     def click(self, pos):
         i, j = pos
-
+        # check if the click was inside the board
         if i < self.width and j < self.height:
             gap = self.width // 9
             x = i // gap
@@ -82,39 +93,48 @@ class Cube:
         self.height = height
         self.selected = False
 
+    # draw the number inside the cube
     def draw(self, win):
         font = pygame.font.SysFont("comicsans", 40)
 
-        gap = self.width // 9
-        x = self.col * gap
+        gap = self.width // 9   # size of each row and column
+        x = self.col * gap      # start position of the column and row
         y = self.row * gap
 
-        if self.value == 0:
-            # text = font.render(str(self.temp), 1, (128, 128, 128))
-            # win.blit(text, (x + 5, y + 5))
-            pass
-        else:
+        # print the temporary numbers
+        if self.temp != 0 and self.value == 0:
+            text = font.render(str(self.temp), 1, (128, 128, 128))
+            win.blit(text, (x + 5, y + 5))
+
+        # print the official values
+        elif self.value != 0:
             text = font.render(str(self.value), 1, (0, 0, 0))
             win.blit(text, (x + (gap//2 - text.get_width()//2), y + (gap//2 - text.get_height()//2)))
 
+        # print a red rectangle around the selected cube
         if self.selected:
             pygame.draw.rect(win, (255, 0, 0), (x, y, gap, gap), 3)
 
+    def set(self, val):
+        self.value = val
 
+
+# refresh the window
 def redraw_window(win, board):
     win.fill((255, 255, 255))
     board.draw()
 
 
 def main():
-    win = pygame.display.set_mode((540, 600))
-    pygame.display.set_caption('Sudoku')
-    board = Grid(9, 9, 540, 540, win)
+    win = pygame.display.set_mode((540, 600))   # set the display
+    pygame.display.set_caption('Sudoku')        # name of the window
+    board = Grid(9, 9, 540, 540, win)           # set the board
     run = True
+    key = None
 
     while run:
 
-        for event in pygame.event.get():
+        for event in pygame.event.get():        # get events
             if event.type == pygame.QUIT:
                 run = False
 
@@ -137,12 +157,26 @@ def main():
                     key = 8
                 if event.key == pygame.K_9 or event.key == pygame.K_KP9:
                     key = 9
+                # add clear
+                # add pencil
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                pos = pygame.mouse.get_pos()
-                clicked = board.click(pos)
+                pos = pygame.mouse.get_pos()    # get the mouse cursor position
+                clicked = board.click(pos)      # get the row and column of pos
                 if clicked:
                     board.select(clicked[0], clicked[1])
+                    key = None
+
+            if board.selected and key != None:
+                '''
+                if pencil:
+                    board.sketch(key)
+                else:
+                    do the real stuff
+                if board.is_finished():
+                    game over you won
+                '''
+                board.place(key)
 
         redraw_window(win, board)
         pygame.display.update()
