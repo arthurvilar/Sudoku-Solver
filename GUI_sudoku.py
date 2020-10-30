@@ -1,4 +1,7 @@
 import pygame
+import time
+import tkinter as tk
+from tkinter import messagebox
 pygame.font.init()
 
 
@@ -46,19 +49,21 @@ class Grid:
 
     # draw the grid lines and the cubes
     def draw(self):
-        # Draw grid lines
+        # draw grid lines
         gap = self.width // 9   # size of each row and column
 
         for i in range(self.rows + 1):
-            if i % 3 == 0 and i != 0:
-                thick = 4
+            if i % 3 == 0:
+                thick = 3
+                # horizontal lines and vertical lines
+                pygame.draw.line(self.win, (0, 0, 0), (0, i * gap + 1), (self.width + 2, i * gap + 1), thick)
+                pygame.draw.line(self.win, (0, 0, 0), (i * gap + 1, 0), (i * gap + 1, self.height), thick)
             else:
                 thick = 1
+                pygame.draw.line(self.win, (0, 0, 0), (3, i * gap + 1), (self.width, i * gap + 1), thick)
+                pygame.draw.line(self.win, (0, 0, 0), (i * gap + 1, 3), (i * gap + 1, self.height), thick)
 
-            pygame.draw.line(self.win, (0, 0, 0), (0, i * gap), (self.width, i * gap), thick)   # horizontal lines
-            pygame.draw.line(self.win, (0, 0, 0), (i * gap, 0), (i * gap, self.height), thick)  # vertical lines
-
-        # Draw cubes
+        # draw cubes
         for i in range(self.rows):
             for j in range(self.cols):
                 self.cubes[i][j].draw(self.win)
@@ -94,6 +99,7 @@ class Grid:
                     return False
         return True
 
+    # solve the model board, but don't change the cubes values, to see if it's a valid solution
     def solve(self):
         find = find_empty(self.model)
         if not find:
@@ -101,12 +107,44 @@ class Grid:
         else:
             i, j = find
 
+        # try every number until it finds one that fits
         for n in range(1, 10):
             if possible(self.model, n, (i, j)):
                 self.model[i][j] = n
                 if self.solve():
                     return True
                 self.model[i][j] = 0  # backtrack
+        return False
+
+    # solve the board with a simple animation to show the backtracking working
+    def auto_solve(self):
+        self.update_model()
+        find = find_empty(self.model)
+        if not find:
+            return True
+        else:
+            i, j = find
+
+        # try every number until it finds one that fits
+        for n in range(1, 10):
+            if possible(self.model, n, (i, j)):
+                self.model[i][j] = n
+                self.cubes[i][j].set(n)
+                self.cubes[i][j].draw_change(self.win, True)    # green rectangle
+                self.update_model()
+                pygame.display.update()
+                pygame.time.delay(50)
+
+                if self.auto_solve():
+                    return True
+
+                self.model[i][j] = 0    # backtrack
+                self.cubes[i][j].set(0)
+                self.cubes[i][j].draw_change(self.win, False)   # red rectangle
+                self.update_model()
+                pygame.display.update()
+                pygame.time.delay(50)
+
         return False
 
 
@@ -139,10 +177,28 @@ class Cube:
         # print the official values
         elif self.value != 0:
             text = font.render(str(self.value), 1, (0, 0, 0))
-            win.blit(text, (x + (gap//2 - text.get_width()//2), y + (gap//2 - text.get_height()//2)))
+            win.blit(text, (1 + x + (gap//2 - text.get_width()//2), 3 + y + (gap//2 - text.get_height()//2)))
 
         # print a red rectangle around the selected cube
         if self.selected:
+            pygame.draw.rect(win, (255, 0, 0), (x + 1, y + 1, gap, gap), 3)
+
+    # draw the animation of the auto solve
+    def draw_change(self, win, g=True):
+        fnt = pygame.font.SysFont("comicsans", 40)
+
+        gap = self.width // 9  # size of each row and column
+        x = self.col * gap     # start position of the column and row
+        y = self.row * gap
+
+        pygame.draw.rect(win, (255, 255, 255), (x, y, gap, gap), 0)
+
+        text = fnt.render(str(self.value), 1, (0, 0, 0))
+        win.blit(text, (x + (gap//2 - text.get_width()//2), y + (gap//2 - text.get_height()//2)))
+
+        if g:
+            pygame.draw.rect(win, (0, 255, 0), (x, y, gap, gap), 3)
+        else:
             pygame.draw.rect(win, (255, 0, 0), (x, y, gap, gap), 3)
 
     # set cube's value to val
@@ -186,19 +242,60 @@ def possible(board, n, pos):
 
 
 # refresh the window
-def redraw_window(win, board):
+def redraw_window(win, board, t, strikes):
     win.fill((255, 255, 255))
+    fnt = pygame.font.SysFont("comicsans", 35)
+
+    # draw strikes
+    text = fnt.render(f"Errors: {strikes}/5 ", 1, (255, 0, 0))
+    win.blit(text, (15, 560))
+
+    # draw time
+    text = fnt.render("Time: " + format_time(t), 1, (0, 0, 0))
+    win.blit(text, (540 - 135, 560))
+
+    # draw mode pencil
+    text = fnt.render("Pencil: OFF", 1, (0, 0, 0))
+    win.blit(text, (200, 560))
+
+    # draw board and numbers
     board.draw()
 
 
+# convert the time in seconds to minutes:seconds
+def format_time(secs):
+    sec = secs % 60
+    minute = secs//60
+    hour = minute//60
+
+    mat = " " + str(minute) + ":" + str(sec)
+    return mat
+
+
+# display a message box if you lost the game
+def message_box(subject):
+    root = tk.Tk()
+    root.attributes("-topmost", True)
+    root.withdraw()
+    messagebox.showinfo(subject)
+    try:
+        root.destroy()
+    except:
+        pass
+
+
 def main():
-    win = pygame.display.set_mode((540, 600))   # set the display
+    win = pygame.display.set_mode((543, 600))   # set the display
     pygame.display.set_caption('Sudoku')        # name of the window
     board = Grid(9, 9, 540, 540, win)           # set the board
+    start = time.time()
+    strikes = 0
     run = True
     key = None
 
-    while run:
+    while run and strikes < 5:
+
+        play_time = round(time.time() - start)
 
         for event in pygame.event.get():        # get events
             if event.type == pygame.QUIT:
@@ -223,6 +320,10 @@ def main():
                     key = 8
                 if event.key == pygame.K_9 or event.key == pygame.K_KP9:
                     key = 9
+
+                if event.key == pygame.K_SPACE:
+                    board.auto_solve()
+
                 # add clear
                 # add pencil
 
@@ -233,28 +334,31 @@ def main():
                     board.select(clicked[0], clicked[1])
                     key = None
 
-            if board.selected and key != None:
-                '''
-                if pencil:
-                    board.sketch(key)
-                else:
-                    do the real stuff
-                if board.is_finished():
-                    game over you won
-                '''
-                if board.place(key):
-                    print('success')
-                else:
-                    print('wrong')
+        if board.selected and key != None:
+            '''
+            if pencil:
+                board.sketch(key)
+            else:
+                do the real stuff
+            if board.is_finished():
+                game over you won
+            '''
+            if board.place(key):
+                print('success')
+            else:
+                print('wrong')
+                strikes += 1
 
-                key = None
+            key = None
 
-                if board.is_finished():
-                    print('GAME OVER')
-                    run = False
+            if board.is_finished():
+                print('GAME OVER')
 
-        redraw_window(win, board)
+            if strikes >= 5:
+                message_box('You Lost!')
+
         pygame.display.update()
+        redraw_window(win, board, play_time, strikes)
 
 
 main()
