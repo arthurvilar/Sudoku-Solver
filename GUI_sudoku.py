@@ -21,21 +21,28 @@ class Grid:
         self.cubes = [[Cube(self.board[i][j], i, j, width, height) for j in range(cols)] for i in range(rows)]
         self.width = width
         self.height = height
-        self.model = None
+        self.model = None       # board without the temp values
         self.update_model()
-        self.selected = None
+        self.selected = None    # position (row and column) of the selected cube
         self.win = win
 
     # generates a board without the temp values to check for a solution
     def update_model(self):
-        for i in range(self.rows):
-            for j in range(self.cols):
-                self.model = self.cubes[i][j].value
+        self.model = [[self.cubes[i][j].value for j in range(self.cols)] for i in range(self.rows)]
 
+    # check if it's possible to place the value val in the selected cube and places it
     def place(self, val):
         i, j = self.selected
         if self.cubes[i][j].value == 0:
             self.cubes[i][j].set(val)
+            self.update_model()
+
+            if possible(self.model, val, (i, j)) and self.solve():
+                return True
+            else:
+                self.cubes[i][j].set(0)
+                self.update_model()
+                return False
 
     # draw the grid lines and the cubes
     def draw(self):
@@ -75,9 +82,32 @@ class Grid:
             gap = self.width // 9
             x = i // gap
             y = j // gap
-            return x, y
+            return int(x), int(y)
         else:
             return None
+
+    # check if the board is complete
+    def is_finished(self):
+        for i in range(self.rows):
+            for j in range(self.cols):
+                if self.cubes[i][j].value == 0:
+                    return False
+        return True
+
+    def solve(self):
+        find = find_empty(self.model)
+        if not find:
+            return True
+        else:
+            i, j = find
+
+        for n in range(1, 10):
+            if possible(self.model, n, (i, j)):
+                self.model[i][j] = n
+                if self.solve():
+                    return True
+                self.model[i][j] = 0  # backtrack
+        return False
 
 
 class Cube:
@@ -115,8 +145,44 @@ class Cube:
         if self.selected:
             pygame.draw.rect(win, (255, 0, 0), (x, y, gap, gap), 3)
 
+    # set cube's value to val
     def set(self, val):
         self.value = val
+
+
+# find an empty position and return the row, column
+def find_empty(board):
+    for i in range(len(board)):
+        for j in range(len(board[i])):
+            if board[i][j] == 0:
+                return i, j
+
+    return None
+
+
+# check if number n can be placed on board[row][col]
+def possible(board, n, pos):
+    row, col = pos
+
+    # check row
+    for i in range(len(board[row])):
+        if board[row][i] == n and col != i:
+            return False
+
+    # check column
+    for i in range(len(board)):
+        if board[i][col] == n and row != i:
+            return False
+
+    # check box
+    y = row//3 * 3
+    x = col//3 * 3
+    for i in range(y, y+3):
+        for j in range(x, x+3):
+            if board[i][j] == n and (i, j) != pos:
+                return False
+
+    return True
 
 
 # refresh the window
@@ -176,7 +242,16 @@ def main():
                 if board.is_finished():
                     game over you won
                 '''
-                board.place(key)
+                if board.place(key):
+                    print('success')
+                else:
+                    print('wrong')
+
+                key = None
+
+                if board.is_finished():
+                    print('GAME OVER')
+                    run = False
 
         redraw_window(win, board)
         pygame.display.update()
