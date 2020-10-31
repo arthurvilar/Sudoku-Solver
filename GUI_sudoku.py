@@ -133,7 +133,7 @@ class Grid:
                 self.cubes[i][j].draw_change(self.win, True)    # green rectangle
                 self.update_model()
                 pygame.display.update()
-                pygame.time.delay(50)
+                pygame.time.delay(5)
 
                 if self.auto_solve():
                     return True
@@ -143,7 +143,7 @@ class Grid:
                 self.cubes[i][j].draw_change(self.win, False)   # red rectangle
                 self.update_model()
                 pygame.display.update()
-                pygame.time.delay(50)
+                pygame.time.delay(5)
 
         return False
 
@@ -154,7 +154,7 @@ class Cube:
 
     def __init__(self, value, row, col, width, height):
         self.value = value
-        self.temp = 0
+        self.temp = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.row = row
         self.col = col
         self.width = width
@@ -170,12 +170,12 @@ class Cube:
         y = self.row * gap
 
         # print the temporary numbers
-        if self.temp != 0 and self.value == 0:
+        '''if self.temp != 0 and self.value == 0:
             text = font.render(str(self.temp), 1, (128, 128, 128))
-            win.blit(text, (x + 5, y + 5))
+            win.blit(text, (x + 5, y + 5))'''
 
         # print the official values
-        elif self.value != 0:
+        if self.value != 0:
             text = font.render(str(self.value), 1, (0, 0, 0))
             win.blit(text, (1 + x + (gap//2 - text.get_width()//2), 3 + y + (gap//2 - text.get_height()//2)))
 
@@ -242,7 +242,7 @@ def possible(board, n, pos):
 
 
 # refresh the window
-def redraw_window(win, board, t, strikes):
+def redraw_window(win, board, t, strikes, pencil):
     win.fill((255, 255, 255))
     fnt = pygame.font.SysFont("comicsans", 35)
 
@@ -254,8 +254,11 @@ def redraw_window(win, board, t, strikes):
     text = fnt.render("Time: " + format_time(t), 1, (0, 0, 0))
     win.blit(text, (540 - 135, 560))
 
-    # draw mode pencil
-    text = fnt.render("Pencil: OFF", 1, (0, 0, 0))
+    # draw pencil mode
+    if pencil:
+        text = fnt.render("Pencil: ON", 1, (0, 0, 0))
+    else:
+        text = fnt.render("Pencil: OFF", 1, (0, 0, 0))
     win.blit(text, (200, 560))
 
     # draw board and numbers
@@ -273,11 +276,11 @@ def format_time(secs):
 
 
 # display a message box if you lost the game
-def message_box(subject):
+def message_box(subject, content):
     root = tk.Tk()
     root.attributes("-topmost", True)
     root.withdraw()
-    messagebox.showinfo(subject)
+    messagebox.showinfo(subject, content)
     try:
         root.destroy()
     except:
@@ -289,11 +292,13 @@ def main():
     pygame.display.set_caption('Sudoku')        # name of the window
     board = Grid(9, 9, 540, 540, win)           # set the board
     start = time.time()
+    play_time = 0
     strikes = 0
+    pencil = False
     run = True
     key = None
 
-    while run and strikes < 5:
+    while run and strikes < 5 and not board.is_finished():
 
         play_time = round(time.time() - start)
 
@@ -302,6 +307,7 @@ def main():
                 run = False
 
             if event.type == pygame.KEYDOWN:
+                # Numbers
                 if event.key == pygame.K_1 or event.key == pygame.K_KP1:
                     key = 1
                 if event.key == pygame.K_2 or event.key == pygame.K_KP2:
@@ -321,9 +327,18 @@ def main():
                 if event.key == pygame.K_9 or event.key == pygame.K_KP9:
                     key = 9
 
+                # Auto solve
                 if event.key == pygame.K_SPACE:
                     board.auto_solve()
 
+                # Pencil
+                if event.key == pygame.K_p:
+                    if pencil:
+                        pencil = False
+                    else:
+                        pencil = True
+
+                # Select with arrow keys
                 if event.key == pygame.K_UP and board.selected:
                     i, j = board.selected
                     if i >= 1:
@@ -340,9 +355,6 @@ def main():
                     i, j = board.selected
                     if j >= 1:
                         board.select(j - 1, i)
-
-                # add clear
-                # add pencil
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()    # get the mouse cursor position
@@ -368,14 +380,15 @@ def main():
 
             key = None
 
-            if board.is_finished():
-                print('GAME OVER')
-
             if strikes >= 5:
-                message_box('You Lost!')
+                message_box('You Lost!', None)
 
         pygame.display.update()
-        redraw_window(win, board, play_time, strikes)
+        redraw_window(win, board, play_time, strikes, pencil)
+
+    if board.is_finished():
+        play_time = round(time.time() - start)
+        message_box('You won!', f'Time: {format_time(play_time)}')
 
 
 main()
