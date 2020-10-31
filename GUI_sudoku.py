@@ -191,15 +191,15 @@ class Cube:
         x = self.col * gap     # start position of the column and row
         y = self.row * gap
 
-        pygame.draw.rect(win, (255, 255, 255), (x, y, gap, gap), 0)
+        pygame.draw.rect(win, (255, 255, 255), (x + 1, y + 1, gap, gap), 0)
 
         text = fnt.render(str(self.value), 1, (0, 0, 0))
-        win.blit(text, (x + (gap//2 - text.get_width()//2), y + (gap//2 - text.get_height()//2)))
+        win.blit(text, (1 + x + (gap//2 - text.get_width()//2), 3 + y + (gap//2 - text.get_height()//2)))
 
         if g:
-            pygame.draw.rect(win, (0, 255, 0), (x, y, gap, gap), 3)
+            pygame.draw.rect(win, (0, 255, 0), (x + 1, y + 1, gap, gap), 3)     # green rectangle
         else:
-            pygame.draw.rect(win, (255, 0, 0), (x, y, gap, gap), 3)
+            pygame.draw.rect(win, (255, 0, 0), (x + 1, y + 1, gap, gap), 3)     # red rectangle
 
     # set cube's value to val
     def set(self, val):
@@ -323,6 +323,23 @@ def main():
 
                 if event.key == pygame.K_SPACE:
                     board.auto_solve()
+
+                if event.key == pygame.K_UP and board.selected:
+                    i, j = board.selected
+                    if i >= 1:
+                        board.select(j, i - 1)
+                if event.key == pygame.K_DOWN and board.selected:
+                    i, j = board.selected
+                    if i <= 7:
+                        board.select(j, i + 1)
+                if event.key == pygame.K_RIGHT and board.selected:
+                    i, j = board.selected
+                    if j <= 7:
+                        board.select(j + 1, i)
+                if event.key == pygame.K_LEFT and board.selected:
+                    i, j = board.selected
+                    if j >= 1:
+                        board.select(j - 1, i)
 
                 # add clear
                 # add pencil
