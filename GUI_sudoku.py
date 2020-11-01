@@ -327,11 +327,11 @@ def main():
                     key = 9
 
                 # Auto solve
-                if event.key == pygame.K_SPACE:
+                if event.key == pygame.K_s:
                     board.auto_solve()
 
                 # Pencil
-                if event.key == pygame.K_p:
+                if event.key == pygame.K_SPACE:
                     if pencil:
                         pencil = False
                     else:
