@@ -281,22 +281,22 @@ def redraw_window(win, board, t, strikes, pencil):
     win.fill((255, 255, 255))
     fnt = pygame.font.SysFont("comicsans", 35)
 
-    # draw strikes
+    # Draw strikes
     text = fnt.render(f"Errors: {strikes}/5 ", 1, (255, 0, 0))
     win.blit(text, (15, 560))
 
-    # draw time
+    # Draw time
     text = fnt.render("Time: " + format_time(t), 1, (0, 0, 0))
     win.blit(text, (540 - 140, 560))
 
-    # draw pencil mode
+    # Draw pencil mode
     if pencil:
         text = fnt.render("Pencil: ON", 1, (0, 0, 0))
     else:
         text = fnt.render("Pencil: OFF", 1, (0, 0, 0))
     win.blit(text, (200, 560))
 
-    # draw board and numbers
+    # Draw board and numbers
     board.draw()
 
 
