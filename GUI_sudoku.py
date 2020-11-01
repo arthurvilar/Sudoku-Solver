@@ -292,7 +292,6 @@ def main():
     pygame.display.set_caption('Sudoku')        # name of the window
     board = Grid(9, 9, 540, 540, win)           # set the board
     start = time.time()
-    play_time = 0
     strikes = 0
     pencil = False
     run = True
