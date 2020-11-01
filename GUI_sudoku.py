@@ -368,6 +368,15 @@ def main():
                 if event.key == pygame.K_DELETE and board.selected:
                     board.clear()
 
+                # Pause
+                '''
+                if event.key == pygame.K_p:
+                    if pause:
+                        pause = False
+                    else:
+                        pause = True
+                '''
+
                 # Pencil
                 if event.key == pygame.K_SPACE:
                     if pencil:
@@ -393,6 +402,7 @@ def main():
                     if j >= 1:
                         board.select(j - 1, i)
 
+            # Select with mouse
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()    # get the mouse cursor position
                 clicked = board.click(pos)      # get the row and column of pos
@@ -400,6 +410,7 @@ def main():
                     board.select(clicked[0], clicked[1])
                     key = None
 
+        # Put number in board
         if board.selected and key != None:
             if pencil:
                 board.sketch(key)
