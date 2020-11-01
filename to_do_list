@@ -3,3 +3,5 @@ OPCIONAIS:
 - função pause
 
 - mostrar todos os numeros iguais ao selecionado em destaque
+
+- ler o tabuleiro de um arquivo txt de entrada
