@@ -1,14 +1,5 @@
-OBRIGATÓRIAS:
-
-- função pencil com todos os numeros em seus cantos certos
-  -> com a função on: se clicar uma vez coloca, se clicar dnv tira
-
-- formatar os horarios pra ficar mais bonito
-
 OPCIONAIS:
 
 - função pause
-
-- pintar de outra cor a linha, a coluna e a box do quadrado selecionado
 
 - mostrar todos os numeros iguais ao selecionado em destaque
